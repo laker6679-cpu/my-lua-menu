@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Lua Menu</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: #0a0a0f;
+        color: #e0e0e0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        display: flex;
+        min-height: 100vh;
+    }
+
+    /* ===== Сайдбар ===== */
+    .sidebar {
+        width: 260px;
+        background: #12121a;
+        padding: 25px 20px;
+        border-right: 1px solid #1f1f2e;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    .logo {
+        color: #ff3b5c;
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .logo span { color: #fff; }
+    .nav-item {
+        display: block;
+        color: #888;
+        text-decoration: none;
+        padding: 12px 15px;
+        margin: 6px 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+    }
+    .nav-item:hover {
+        background: #1a1a26;
+        color: #fff;
+    }
+    .nav-item.active {
+        background: linear-gradient(90deg, #ff3b5c, #ff6b3d);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    /* ===== Контент ===== */
+    .content {
+        margin-left: 260px;
+        padding: 40px;
+        flex: 1;
+        max-width: 1000px;
+    }
+    h1 {
+        color: #ff3b5c;
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    h2 {
+        color: #fff;
+        font-size: 18px;
+        margin: 25px 0 15px;
+    }
+    p { color: #999; line-height: 1.6; margin-bottom: 15px; }
+
+    /* ===== Панели вкладок ===== */
+    .panel { display: none; animation: fadeIn 0.3s; }
+    .panel.active { display: block; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Карточки с тумблерами ===== */
+    .card {
+        background: #12121a;
+        border: 1px solid #1f1f2e;
+        border-radius: 12px;
+        padding: 18px 22px;
+        margin: 12px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: border 0.2s;
+    }
+    .card:hover { border-color: #ff3b5c; }
+    .card-info h3 {
+        font-size: 15px;
+        color: #fff;
+        margin-bottom: 4px;
+    }
+    .card-info small {
+        color: #666;
+        font-size: 12px;
+    }
+
+    /* ===== Тумблер (switch) ===== */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #2a2a3a;
+        border-radius: 26px;
+        transition: 0.3s;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background: #666;
+        border-radius: 50%;
+        transition: 0.3s;
+    }
+    .switch input:checked + .slider {
+        background: linear-gradient(90deg, #ff3b5c, #ff6b3d);
+    }
+    .switch input:checked + .slider:before {
+        transform: translateX(24px);
+        background: #fff;
+    }
+
+    /* ===== Кнопка копирования ===== */
+    .copy-box {
+        background: #1a1a26;
+        border: 1px solid #2a2a3a;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 0;
+    }
+    .copy-box code {
+        color: #ff6b3d;
+        font-size: 12px;
+        word-break: break-all;
+        flex: 1;
+    }
+    .copy-btn {
+        background: linear-gradient(90deg, #ff3b5c, #ff6b3d);
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: transform 0.1s;
+    }
+    .copy-btn:active { transform: scale(0.95); }
+
+    /* ===== Слайдер ===== */
+    .slider-row {
+        background: #12121a;
+        border: 1px solid #1f1f2e;
+        border-radius: 12px;
+        padding: 18px 22px;
+        margin: 12px 0;
+    }
+    .slider-row label {
+        display: flex;
+        justify-content: space-between;
+        color: #fff;
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    .slider-row label span { color: #ff3b5c; font-weight: 600; }
+    input[type="range"] {
+        width: 100%;
+        accent-color: #ff3b5c;
+        cursor: pointer;
+    }
+
+    /* ===== Статистика ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    .stat {
+        background: #12121a;
+        border: 1px solid #1f1f2e;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .stat-label { color: #666; font-size: 12px; text-transform: uppercase; }
+    .stat-value { color: #ff3b5c; font-size: 22px; font-weight: bold; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ================= САЙДБАР ================= -->
+<div class="sidebar">
+    <div class="logo">MY <span>MENU</span></div>
+    <a class="nav-item active" data-tab="home">🏠 Главная</a>
+    <a class="nav-item" data-tab="script">📜 Скрипт</a>
+    <a class="nav-item" data-tab="player">👤 Игрок</a>
+    <a class="nav-item" data-tab="visuals">👁️ Визуалы</a>
+    <a class="nav-item" data-tab="settings">⚙️ Настройки</a>
+</div>
+
+<!-- ================= КОНТЕНТ ================= -->
+<div class="content">
+
+    <!-- ---- ГЛАВНАЯ ---- -->
+    <div id="home" class="panel active">
+        <h1>Добро пожаловать</h1>
+        <p>Это моё личное Lua-меню для Roblox. Здесь собраны лучшие функции в одном месте.</p>
+
+        <h2>Статистика</h2>
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-label">Версия скрипта</div>
+                <div class="stat-value">v1.0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Активных функций</div>
+                <div class="stat-value" id="activeCount">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Текущее время</div>
+                <div class="stat-value" id="clock">--:--</div>
+            </div>
+        </div>
+
+        <h2>Информация</h2>
+        <p>Разработчик: <b style="color:#fff;">Твоё Имя</b><br>
+        Связь: <b style="color:#fff;">@твой_телеграм</b></p>
+    </div>
+
+    <!-- ---- СКРИПТ ---- -->
+    <div id="script" class="panel">
+        <h1>Загрузка скрипта</h1>
+        <p>Скопируй строку ниже и вставь её в свой Roblox-экзекутор:</p>
+
+        <div class="copy-box">
+            <code id="scriptCode">loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/df9eefd22cc4f24ea947c9507ea057d1ab91353efecfb5538d292920007de7d2/download"))()</code>
+            <button class="copy-btn" onclick="copyScript()">Копировать</button>
+        </div>
+
+        <h2>Как использовать</h2>
+        <p>1. Открой Roblox и зайди в игру<br>
+        2. Запусти свой экзекутор<br>
+        3. Вставь скопированный код<br>
+        4. Нажми Execute<br>
+        5. Меню появится в игре</p>
+    </div>
+
+    <!-- ---- ИГРОК ---- -->
+    <div id="player" class="panel">
+        <h1>Функции игрока</h1>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>Speed Hack</h3>
+                <small>Увеличение скорости передвижения</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="speed">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>Infinite Jump</h3>
+                <small>Бесконечный прыжок</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="jump">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>Auto Rejoin</h3>
+                <small>Автоматическое переподключение</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="rejoin">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="slider-row">
+            <label>Скорость: <span id="speedValue">16</span></label>
+            <input type="range" min="16" max="200" value="16" id="speedRange">
+        </div>
+    </div>
+
+    <!-- ---- ВИЗУАЛЫ ---- -->
+    <div id="visuals" class="panel">
+        <h1>Визуальные функции</h1>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>ESP игроков</h3>
+                <small>Подсветка всех игроков сквозь стены</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="esp">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>Fullbright</h3>
+                <small>Убирает темноту на карте</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="fullbright">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- ---- НАСТРОЙКИ ---- -->
+    <div id="settings" class="panel">
+        <h1>Настройки</h1>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>Сохранять конфиг</h3>
+                <small>Автосохранение настроек</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="saveConfig" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card">
+            <div class="card-info">
+                <h3>Уведомления</h3>
+                <small>Показывать уведомления в игре</small>
+            </div>
+            <label class="switch">
+                <input type="checkbox" data-feature="notify" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <h2>Сброс</h2>
+        <div class="copy-box">
+            <code>Все настройки будут сброшены до стандартных</code>
+            <button class="copy-btn" onclick="resetAll()">Сбросить</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ===== Переключение вкладок =====
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            item.classList.add('active');
+            document.getElementById(item.dataset.tab).classList.add('active');
+        });
+    });
+
+    // ===== Копирование скрипта =====
+    function copyScript() {
+        const code = document.getElementById('scriptCode').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            alert('✅ Скрипт скопирован!');
+        }).catch(() => {
+            // Fallback для старых браузеров
+            const ta = document.createElement('textarea');
+            ta.value = code;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            alert('✅ Скрипт скопирован!');
+        });
+    }
+
+    // ===== Счётчик активных функций =====
+    function updateActiveCount() {
+        const checked = document.querySelectorAll('input[data-feature]:checked').length;
+        const el = document.getElementById('activeCount');
+        if (el) el.textContent = checked;
+    }
+
+    document.querySelectorAll('input[data-feature]').forEach(input => {
+        input.addEventListener('change', () => {
+            const feature = input.dataset.feature;
+            const state = input.checked ? 'ВКЛ' : 'ВЫКЛ';
+            console.log(`[My Menu] ${feature}: ${state}`);
+            updateActiveCount();
+
+            // Сохранение в localStorage
+            localStorage.setItem('mymenu_' + feature, input.checked);
+        });
+
+        // Восстановление состояния при загрузке
+        const saved = localStorage.getItem('mymenu_' + input.dataset.feature);
+        if (saved !== null) input.checked = saved === 'true';
+    });
+
+    // ===== Слайдер скорости =====
+    const speedRange = document.getElementById('speedRange');
+    if (speedRange) {
+        speedRange.addEventListener('input', () => {
+            document.getElementById('speedValue').textContent = speedRange.value;
+        });
+    }
+
+    // ===== Часы =====
+    function updateClock() {
+        const now = new Date();
+        const t = now.getHours().toString().padStart(2, '0') + ':' +
+                  now.getMinutes().toString().padStart(2, '0');
+        const el = document.getElementById('clock');
+        if (el) el.textContent = t;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ===== Сброс =====
+    function resetAll() {
+        if (!confirm('Сбросить все настройки?')) return;
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('mymenu_')) localStorage.removeItem(k);
+        });
+        location.reload();
+    }
+
+    // Инициализация
+    updateActiveCount();
+</script>
+
+</body>
+</html>
